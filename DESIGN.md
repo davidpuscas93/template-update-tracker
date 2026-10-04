@@ -88,8 +88,8 @@ Most bugs in such a system live where the pieces meet: event handlers, the DB, t
 
 1. **Unit tests: the pure logic**. Two pieces have no I/O: the pending rule (given the latest, current and declined versions, return pending or not) and the summary coverage check (given the diff entries and the LLM's tags, pass or fail). Both are tested as tables of cases: for the rule, the three from section 1 plus equal versions and nothing declined; for the check, a missing entry and a tag that points nowhere.
 2. **Integration tests: event handling and the API**. The tracker runs against a real Postgres (Testcontainers). Each test sends an event and checks the resulting row and API response. Two cases matter most:
-  - the same event delivered twice changes nothing (SQS can deliver duplicates);
-  - events arriving out of order never move a version backwards (SQS does not guarantee order).
+   - the same event delivered twice changes nothing (SQS can deliver duplicates);
+   - events arriving out of order never move a version backwards (SQS does not guarantee order).
 3. **Summaries**. Within the integration tests, Bedrock is replaced by a fake LLM that returns fixed text, so tests are fast, free and repeatable. They check that the right version pairs are generated on publish, that the on-request fallback works when generation fails, and that a summary failing the coverage check twice falls back to the mechanical list. Whether the text itself is good can't be asserted in a test; that is covered in section 4.
 
 
