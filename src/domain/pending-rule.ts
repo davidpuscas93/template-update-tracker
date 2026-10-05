@@ -5,5 +5,10 @@ export interface PendingRuleInput {
 }
 
 export function isPending(input: PendingRuleInput): boolean {
-  throw new Error("not implemented");
+  const { latestVersion, currentVersion, declinedVersion } = input;
+
+  return (
+    latestVersion > currentVersion &&
+    (declinedVersion === null || latestVersion > declinedVersion)
+  );
 }
