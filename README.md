@@ -20,16 +20,16 @@ The design is in [DESIGN.md](DESIGN.md). The code is its domain module: the pend
 
 I used Claude in two ways:
 
-- A separate chat session via Opus 5.5 (not included) to work through the design; it also drafted much of the wording of [DESIGN.md], which I reviewed and edited section by section.
-- Two Claude Code sessions in the project terminal, always starting in plan mode: one to scaffold the project and draft the test tables, one to draft the first three sections of this [README.md]. The second also reviewed my implementation. The plans are in `docs/plans`, the exported sessions in `docs/ai-sessions`.
+- A separate chat session via Opus 5.5 (not included) to work through the design; it also drafted much of the wording of [DESIGN.md](DESIGN.md), which I reviewed and edited section by section.
+- Two Claude Code sessions in the project terminal, always starting in plan mode: one to scaffold the project and draft the test tables, one to draft the first three sections of this [README.md](README.md). The first also reviewed my implementation. The plans are in `docs/plans`, the exported sessions in `docs/ai-sessions`.
 
 I have implemented both functions myself.
 
 Where I corrected or overruled AI:
 
-- Its first plan modelled the LLM's tags as a flat list, losing which sentence each tag came from, so a sentence with no tags could never be detected. I traced that to a gap in my own design, added "every sentence has at least one tag" to [DESIGN.md] in §4, and had the plan revised.
+- Its first plan modelled the LLM's tags as a flat list, losing which sentence each tag came from, so a sentence with no tags could never be detected. I traced that to a gap in my own design, added "every sentence has at least one tag" to [DESIGN.md](DESIGN.md) in §4, and had the plan revised.
 - The same plan didn't save itself to `docs/plans` as asked, and had no `.gitignore`.
-- In its [README.md] draft, the "why not now" reasons were its own guesses, and one contradicted the point it was explaining. I replaced them with the actual reasons.
-- From its code review, I took one suggestion (a test for a sentence that tags one real and one invented entry) and rejected another (mergin two loops into one): three separate blocks mirror the three rules in the design, and at this scale the merge saves nothing.
+- In its [README.md](README.md) draft, the "why not now" reasons were its own guesses, and one contradicted the point it was explaining. I replaced them with the actual reasons.
+- From its code review, I took one suggestion (a test for a sentence that tags one real and one invented entry) and rejected another (merging two loops into one): three separate blocks mirror the three rules in the design, and at this scale the merge saves nothing.
 
-Where it shouldn't be trusted in this domain: the summaries themselves. Auditors act on them, so [DESGIN.md] §4 never lets LLM output reach users unchecked. Every summary is verified in code against the diff, and the content team reviews it.
+Where it shouldn't be trusted in this domain: the summaries themselves. Auditors act on them, so [DESIGN.md](DESIGN.md) §4 never lets LLM output reach users unchecked. Every summary is verified in code against the diff, and the content team reviews it.
