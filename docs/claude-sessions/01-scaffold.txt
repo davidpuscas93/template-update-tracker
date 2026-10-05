@@ -872,3 +872,154 @@
   Ready for you to implement isPending and checkCoverage.
 
 ✻ Baked for 1m 48s · done 1:17 PM
+
+❯ /export docs/claude-sessions/01-scaffold.txt                                  
+  ⎿  Conversation exported to: /Users/davidpuscas/Developer/ParsecStudios/casewa
+     re/template-update-tracker/docs/claude-sessions/01-scaffold.txt
+
+※ recap: Scaffolding the TypeScript domain module from DESIGN.md: both pure functions (pending rule, coverage check) now have typed stubs and table-driven tests, all passing typecheck. Next: you implement the function bodies. (disable recaps in /config)
+
+❯ I've implemented both functions myself. Review src/domain/pending-rule.ts and 
+  src/domain/coverage-check.ts against DESIGN.md: anything that doesn't match   
+  the design, edge cases the tests miss, and anything you'd change, with        
+  reasons. Don't edit any files; list findings only.                            
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+⏺ Both implementations pass all 13 existing tests and typecheck cleanly. Here's
+  the review.
+
+  pending-rule.ts
+
+  Matches design. The logic (latest > current && (declined === null || latest > 
+  declined)) is a direct, literal translation of §1's rule, and the
+  short-circuit on declinedVersion === null correctly avoids ever comparing
+  against null. No concerns here — nothing to change.
+
+  Edge cases the tests miss (none are bugs, just untested states):
+  - currentVersion > latestVersion — shouldn't occur given the §1 assumption
+    that versions only move forward, but the function handles it safely anyway
+    (latest > current is false → not pending). Worth a test only if you want to
+    document that this is the defined fallback for an inconsistent state, not an
+    error.
+  - declinedVersion === currentVersion or declinedVersion > latestVersion — both
+    are states the system shouldn't produce, and the function's behavior for
+    them is still sensible, but they're undocumented in §1. Not worth adding
+    unless you want the test table to double as a spec for "can't happen"
+    states.
+
+  coverage-check.ts
+
+  Matches design. All three §4 checks are present and independent: entry
+  coverage, tag validity, and the new untagged-sentence rule. I traced all 8
+  test cases by hand against the logic and they line up; the test run confirms
+  it.
+
+  Edge case the tests miss:
+  - A sentence whose covers mixes a valid and an invalid id, e.g. covers: ["a", 
+    "z"]. The code handles it correctly (contributes a to coverage, z to
+    invalidTagEntryIds), but no test exercises a sentence that's simultaneously
+    "useful" and "inventing." Worth a case since it's a realistic LLM failure
+    mode (partially right tag), and today nothing proves the two concerns are
+    tracked independently rather than one suppressing the other.
+  - Duplicate ids within diffEntries itself (a data-quality case, not an LLM
+    one) — if two entries shared an id, uncoveredEntryIds could report that id
+    twice. Design doesn't say entry ids are unique, but it's implied by "diff
+    entries" being distinct changes. Not worth guarding against in the pure
+    function (the boundary that produces diffEntries should own that guarantee);
+    flagging only so it's a conscious non-goal rather than an oversight.
+
+  Things I'd change (style, not correctness):
+  - taggedIds and invalidIds are built via two separate sentences.forEach passes
+    over the same covers arrays. They could be computed in one pass (same loop,
+    update both sets based on validIds.has(id)). Harmless at this scale — these
+    are per-summary sentence lists, not hot paths — but it reads as two
+    redundant traversals of the same data for no reason.
+  - The final coverageCheckResult local variable is assigned and then
+    immediately returned — could just return { passed, uncoveredEntryIds, 
+    invalidTagEntryIds, untaggedSentenceIndexes } directly. Purely cosmetic.
+
+  No findings that need fixing before this ships — the two style points are
+  optional polish, and the missing edge cases are additional test coverage you
+  may or may not want, not gaps in the implementation itself.
+
+✻ Worked for 1m 29s · done 2:04 PM
+
+※ recap: Goal: scaffold and verify the template-update-tracker domain module per DESIGN.md. You implemented isPending and checkCoverage and I reviewed both against the design; all tests pass with only minor optional style nits, nothing blocking. (disable recaps in /config)
+
+❯ Add one test case to coverage-check.test.ts: diffEntries [a], one sentence    
+  covering ["a", "z"]. Expected: passed false, uncovered [], invalid [z],       
+  untagged []. Change nothing else.                                             
+
+⏺ Updated plan
+  ⎿  /plan to preview
+
+⏺ User approved Claude's plan
+  ⎿  Plan saved to: ~/.claude/plans/read-design-md-scaffold-a-snug-wind.md · 
+     /plan to edit
+     Add one coverage-check test case
+
+     Context
+
+     During review, I flagged that coverage-check.test.ts has no case for a
+     sentence that mixes a valid and an invalid tag in the same covers array
+     (e.g. ["a", "z"]) — today's cases only exercise all-valid or all-invalid
+     sentences. The user wants exactly that case added, nothing else touched.
+
+     Change
+
+     In src/domain/coverage-check.test.ts, add one entry to the cases array
+     (alongside the existing 8), using the same shape as the other cases:
+
+     {
+       name: "sentence mixes a valid and an invalid tag",
+       input: {
+         diffEntries: [{ id: "a" }],
+         sentences: [{ text: "S1", covers: ["a", "z"] }],
+       },
+       expected: {
+         passed: false,
+         uncoveredEntryIds: [],
+         invalidTagEntryIds: ["z"],
+         untaggedSentenceIndexes: [],
+       },
+     },
+
+     No other file changes. src/domain/coverage-check.ts, pending-rule.ts, and
+     pending-rule.test.ts are untouched.
+
+     Verification
+
+     - npm test — new case should pass given the current checkCoverage
+       implementation (traced by hand: a is tagged so not uncovered, z is
+       invalid so reported, covers is non-empty so not untagged).
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ Update(src/domain/coverage-check.test.ts)
+  ⎿  Added 13 lines
+      132        untaggedSentenceIndexes: [],
+      133      },
+      134    },
+      135 +  {                                                           
+      136 +    name: "sentence mixes a valid and an invalid tag",        
+      137 +    input: {                                                  
+      138 +      diffEntries: [{ id: "a" }],                             
+      139 +      sentences: [{ text: "S1", covers: ["a", "z"] }],        
+      140 +    },                                                        
+      141 +    expected: {                                               
+      142 +      passed: false,                                          
+      143 +      uncoveredEntryIds: [],                                  
+      144 +      invalidTagEntryIds: ["z"],                              
+      145 +      untaggedSentenceIndexes: [],                            
+      146 +    },                                                        
+      147 +  },                                                          
+      148  ];
+      149  
+      150  describe("checkCoverage", () => {
+
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ All 14 tests pass, including the new case. Nothing else was touched.
+
+✻ Cooked for 33s · done 2:24 PM

@@ -132,6 +132,19 @@ const cases: Array<{
       untaggedSentenceIndexes: [],
     },
   },
+  {
+    name: "sentence mixes a valid and an invalid tag",
+    input: {
+      diffEntries: [{ id: "a" }],
+      sentences: [{ text: "S1", covers: ["a", "z"] }],
+    },
+    expected: {
+      passed: false,
+      uncoveredEntryIds: [],
+      invalidTagEntryIds: ["z"],
+      untaggedSentenceIndexes: [],
+    },
+  },
 ];
 
 describe("checkCoverage", () => {
