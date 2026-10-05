@@ -1,0 +1,874 @@
+ ▐▛███▛█   Claude Code v2.1.274
+▝▜██████▀  Sonnet 5 · Claude Pro
+  ▝▝ ▝▝    ~/Developer/ParsecStudios/caseware/template-update-tracker
+
+  Get to finished work sooner with Opus 5.5. Update Claude Code to try it.
+  +1 more · /status
+
+❯ /login                                                                        
+  ⎿  Login successful
+
+❯ /model 
+  ⎿  Kept model as Sonnet 5 (default)
+
+❯ Read DESIGN.md. Scaffold a minimal TypeScript project for the domain module   
+  it describes: package.json, a strict tsconfig, and Vitest. Create stubs for   
+  two pure functions, the pending rule and the summary coverage check, with     
+  their input and output types. The coverage check should report which diff     
+  entries are uncovered and which tags point to no entry, not just pass/fail.   
+  Add a test file for each with a table of cases drawn from the document. Don't 
+  implement the functions; I'll write them. Plan first. Once I approve the      
+  plan, first save it as docs/plans/01-scaffold-domain-module.md, then make the 
+  changes.                                                                      
+
+  Searched for 1 pattern, read 1 file, listed 1 directory (ctrl+o to expand)
+
+⏺ Repo only has DESIGN.md — nothing else to explore. I'll write the plan
+  directly from the design doc.
+
+⏺ Updated plan
+  ⎿  /plan to preview
+  ⎿  User rejected Claude's plan:
+     ╭─────────────────────────────────────────────────────────────────────────╮
+     │ Scaffold the domain module                                              │
+     │                                                                         │
+     │ Context                                                                 │
+     │                                                                         │
+     │ DESIGN.md describes a backend service with two pure, I/O-free functions │
+     │ that are meant to live in one shared domain module: the pending rule    │
+     │ (§1 "Pending Updates", §3.1) and the summary coverage check (§4         │
+     │ "Evaluation", §3.1/§3.3). The repo currently contains only DESIGN.md —  │
+     │ no code, no tooling. This task scaffolds a minimal TypeScript + Vitest  │
+     │ project with typed stubs for both functions and table-driven test files │
+     │ seeded with cases drawn straight from the design doc. The user will     │
+     │ implement the function bodies; this step only sets up structure, types, │
+     │ and test tables.                                                        │
+     │                                                                         │
+     │ Approach                                                                │
+     │                                                                         │
+     │ Project setup                                                           │
+     │                                                                         │
+     │ - package.json — type: module, devDependencies typescript and vitest,   │
+     │   scripts:                                                              │
+     │   - test: vitest run                                                    │
+     │   - test:watch: vitest                                                  │
+     │   - typecheck: tsc --noEmit                                             │
+     │ - tsconfig.json — strict mode on, target: ES2022,                       │
+     │   module/moduleResolution: NodeNext, rootDir: src, outDir: dist,        │
+     │   strict: true, skipLibCheck: true, esModuleInterop: true.              │
+     │ - No framework, no vitest.config.ts — Vitest runs .test.ts files out of │
+     │   the box, matching the design's "no framework" philosophy (§1, "Where  │
+     │   It Runs").                                                            │
+     │                                                                         │
+     │ Domain module layout                                                    │
+     │                                                                         │
+     │ src/domain/                                                             │
+     │   pending-rule.ts                                                       │
+     │   pending-rule.test.ts                                                  │
+     │   coverage-check.ts                                                     │
+     │   coverage-check.test.ts                                                │
+     │                                                                         │
+     │ pending-rule.ts                                                         │
+     │                                                                         │
+     │ Types and stub matching §1 "Pending Updates": "An engagement has a      │
+     │ pending update when the latest published version is newer than both its │
+     │ current version and its declined version."                              │
+     │                                                                         │
+     │ export interface PendingRuleInput {                                     │
+     │   latestVersion: number;                                                │
+     │   currentVersion: number;                                               │
+     │   declinedVersion: number | null;                                       │
+     │ }                                                                       │
+     │                                                                         │
+     │ export function isPending(input: PendingRuleInput): boolean {           │
+     │   throw new Error("not implemented");                                   │
+     │ }                                                                       │
+     │                                                                         │
+     │ Test table (pending-rule.test.ts), cases drawn from §1's worked example │
+     │ plus boundary cases:                                                    │
+     │                                                                         │
+     │ ┌────────┬─────────┬──────────┬──────────┬───────────────────────────── │
+     │ ────┐                                                                   │
+     │ │ latest │ current │ declined │ expected │              from            │
+     │    │                                                                    │
+     │ ├────────┼─────────┼──────────┼──────────┼───────────────────────────── │
+     │ ────┤                                                                   │
+     │ │        │         │          │          │ "v5 is published, engagement │
+     │ on │                                                                    │
+     │ │ 5      │ 3       │ null     │ true     │  v3, nothing declined ->     │
+     │    │                                                                    │
+     │ │        │         │          │          │ pending"                     │
+     │    │                                                                    │
+     │ ├────────┼─────────┼──────────┼──────────┼───────────────────────────── │
+     │ ────┤                                                                   │
+     │ │ 5      │ 3       │ 5        │ false    │ "user declines v5; latest is │
+     │ v5 │                                                                    │
+     │ │        │         │          │          │  -> not pending"             │
+     │    │                                                                    │
+     │ ├────────┼─────────┼──────────┼──────────┼───────────────────────────── │
+     │ ────┤                                                                   │
+     │ │ 6      │ 3       │ 5        │ true     │ "v6 is published; v6 is      │
+     │ newer   │                                                               │
+     │ │        │         │          │          │ than both -> pending again"  │
+     │    │                                                                    │
+     │ ├────────┼─────────┼──────────┼──────────┼───────────────────────────── │
+     │ ────┤                                                                   │
+     │ │ 3      │ 3       │ null     │ false    │ current already at latest,   │
+     │    │                                                                    │
+     │ │        │         │          │          │ nothing declined             │
+     │    │                                                                    │
+     │ ├────────┼─────────┼──────────┼──────────┼───────────────────────────── │
+     │ ────┤                                                                   │
+     │ │ 3      │ 3       │ 2        │ false    │ current already at latest,   │
+     │    │                                                                    │
+     │ │        │         │          │          │ stale decline on record      │
+     │    │                                                                    │
+     │ └────────┴─────────┴──────────┴──────────┴───────────────────────────── │
+     │ ────┘                                                                   │
+     │                                                                         │
+     │ coverage-check.ts                                                       │
+     │                                                                         │
+     │ Types and stub matching §4 Evaluation: "The LLM tags each sentence with │
+     │ the diff entries it describes; plain code checks that every entry is    │
+     │ covered and every tag is real." Failure has two named shapes — omission │
+     │ (diff entry with no tag) and invention (tag pointing to no entry) — so  │
+     │ the result reports both lists, not just pass/fail.                      │
+     │                                                                         │
+     │ export interface DiffEntry {                                            │
+     │   id: string;                                                           │
+     │ }                                                                       │
+     │                                                                         │
+     │ export interface SummaryTag {                                           │
+     │   entryId: string;                                                      │
+     │ }                                                                       │
+     │                                                                         │
+     │ export interface CoverageCheckInput {                                   │
+     │   diffEntries: DiffEntry[];                                             │
+     │   tags: SummaryTag[];                                                   │
+     │ }                                                                       │
+     │                                                                         │
+     │ export interface CoverageCheckResult {                                  │
+     │   passed: boolean;                                                      │
+     │   uncoveredEntryIds: string[];                                          │
+     │   invalidTagEntryIds: string[];                                         │
+     │ }                                                                       │
+     │                                                                         │
+     │ export function checkCoverage(input: CoverageCheckInput):               │
+     │ CoverageCheckResult {                                                   │
+     │   throw new Error("not implemented");                                   │
+     │ }                                                                       │
+     │                                                                         │
+     │ Test table (coverage-check.test.ts), cases drawn from §4's              │
+     │ invention/omission framing:                                             │
+     │                                                                         │
+     │ diffEntries: [a, b]                                                     │
+     │ tags: [a, b]                                                            │
+     │ expected passed: true                                                   │
+     │ expected uncoveredEntryIds: []                                          │
+     │ expected invalidTagEntryIds: []                                         │
+     │ from: full coverage, no stray tags                                      │
+     │ ────────────────────────────────────────                                │
+     │ diffEntries: [a, b]                                                     │
+     │ tags: [a]                                                               │
+     │ expected passed: false                                                  │
+     │ expected uncoveredEntryIds: [b]                                         │
+     │ expected invalidTagEntryIds: []                                         │
+     │ from: omission: b never mentioned                                       │
+     │ ────────────────────────────────────────                                │
+     │ diffEntries: [a]                                                        │
+     │ tags: [a, z]                                                            │
+     │ expected passed: false                                                  │
+     │ expected uncoveredEntryIds: []                                          │
+     │ expected invalidTagEntryIds: [z]                                        │
+     │ from: invention: tag z matches no entry                                 │
+     │ ────────────────────────────────────────                                │
+     │ diffEntries: [a, b]                                                     │
+     │ tags: [a, z]                                                            │
+     │ expected passed: false                                                  │
+     │ expected uncoveredEntryIds: [b]                                         │
+     │ expected invalidTagEntryIds: [z]                                        │
+     │ from: both omission and invention at once                               │
+     │ ────────────────────────────────────────                                │
+     │ diffEntries: []                                                         │
+     │ tags: []                                                                │
+     │ expected passed: true                                                   │
+     │ expected uncoveredEntryIds: []                                          │
+     │ expected invalidTagEntryIds: []                                         │
+     │ from: empty diff, nothing to cover                                      │
+     │ ────────────────────────────────────────                                │
+     │ diffEntries: [a]                                                        │
+     │ tags: [a, a]                                                            │
+     │ expected passed: true                                                   │
+     │ expected uncoveredEntryIds: []                                          │
+     │ expected invalidTagEntryIds: []                                         │
+     │ from: duplicate tags on same entry still fully covers it                │
+     │                                                                         │
+     │ Files to add                                                            │
+     │                                                                         │
+     │ - package.json                                                          │
+     │ - tsconfig.json                                                         │
+     │ - src/domain/pending-rule.ts                                            │
+     │ - src/domain/pending-rule.test.ts                                       │
+     │ - src/domain/coverage-check.ts                                          │
+     │ - src/domain/coverage-check.test.ts                                     │
+     │                                                                         │
+     │ Verification                                                            │
+     │                                                                         │
+     │ - npm install to pull typescript + vitest.                              │
+     │ - npm run typecheck — should pass (stubs type-check even though they    │
+     │   throw at runtime).                                                    │
+     │ - npm test — tests will fail at runtime (stubs throw not implemented),  │
+     │   which is expected until the user fills in the logic. Confirms the     │
+     │   test files load, the table cases are wired to the real function       │
+     │   signatures, and Vitest is configured correctly.                       │
+     ╰─────────────────────────────────────────────────────────────────────────╯
+
+✻ Sautéed for 1m 2s · done 1:03 PM
+
+❯ I've just updated DESIGN.md §4: the coverage check now also requires every    
+  sentence to have at least one tag. Re-read it before revising the plan.       
+  Also, new changes to the existing plan:                                       
+  1. Add docs/plans/01-scaffold-domain-module.md to the files, and save the     
+  plan there before making any other change.                                    
+  2. The coverage check works per sentence, as in DESIGN.md §4. Replace         
+  SummaryTag with TaggedSentence { text: string; covers: string[] }, and take   
+  sentences: TaggedSentence[] as input. Add untaggedSentenceIndexes: number[]   
+  to the result: a sentence covering no diff entry describes nothing in the     
+  diff, so it fails the check.                                                  
+  3. Add test cases: a sentence with empty covers fails; the same unknown id    
+  tagged twice is reported once.                                                
+     Update the plan and show it again.                                         
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ Updated plan
+  ⎿  /plan to preview
+  ⎿  User rejected Claude's plan:
+     ╭─────────────────────────────────────────────────────────────────────────╮
+     │ Scaffold the domain module                                              │
+     │                                                                         │
+     │ Context                                                                 │
+     │                                                                         │
+     │ DESIGN.md describes a backend service with two pure, I/O-free functions │
+     │ that are meant to live in one shared domain module: the pending rule    │
+     │ (§1 "Pending Updates", §3.1) and the summary coverage check (§4         │
+     │ "Evaluation", §3.1/§3.3). The repo currently contains only DESIGN.md —  │
+     │ no code, no tooling. This task scaffolds a minimal TypeScript + Vitest  │
+     │ project with typed stubs for both functions and table-driven test files │
+     │ seeded with cases drawn straight from the design doc. The user will     │
+     │ implement the function bodies; this step only sets up structure, types, │
+     │ and test tables.                                                        │
+     │                                                                         │
+     │ §4 was just updated: the coverage check now also requires every         │
+     │ sentence to have at least one tag, not just that every diff entry is    │
+     │ covered and every tag is real. The plan below reflects that.            │
+     │                                                                         │
+     │ Execution order                                                         │
+     │                                                                         │
+     │ 1. Write this plan to docs/plans/01-scaffold-domain-module.md first.    │
+     │ 2. Then create the rest of the files below.                             │
+     │                                                                         │
+     │ Approach                                                                │
+     │                                                                         │
+     │ Project setup                                                           │
+     │                                                                         │
+     │ - package.json — type: module, devDependencies typescript and vitest,   │
+     │   scripts:                                                              │
+     │   - test: vitest run                                                    │
+     │   - test:watch: vitest                                                  │
+     │   - typecheck: tsc --noEmit                                             │
+     │ - tsconfig.json — strict mode on, target: ES2022,                       │
+     │   module/moduleResolution: NodeNext, rootDir: src, outDir: dist,        │
+     │   strict: true, skipLibCheck: true, esModuleInterop: true.              │
+     │ - No framework, no vitest.config.ts — Vitest runs .test.ts files out of │
+     │   the box, matching the design's "no framework" philosophy (§1, "Where  │
+     │   It Runs").                                                            │
+     │                                                                         │
+     │ Domain module layout                                                    │
+     │                                                                         │
+     │ src/domain/                                                             │
+     │   pending-rule.ts                                                       │
+     │   pending-rule.test.ts                                                  │
+     │   coverage-check.ts                                                     │
+     │   coverage-check.test.ts                                                │
+     │                                                                         │
+     │ pending-rule.ts                                                         │
+     │                                                                         │
+     │ Types and stub matching §1 "Pending Updates": "An engagement has a      │
+     │ pending update when the latest published version is newer than both its │
+     │ current version and its declined version."                              │
+     │                                                                         │
+     │ export interface PendingRuleInput {                                     │
+     │   latestVersion: number;                                                │
+     │   currentVersion: number;                                               │
+     │   declinedVersion: number | null;                                       │
+     │ }                                                                       │
+     │                                                                         │
+     │ export function isPending(input: PendingRuleInput): boolean {           │
+     │   throw new Error("not implemented");                                   │
+     │ }                                                                       │
+     │                                                                         │
+     │ Test table (pending-rule.test.ts), cases drawn from §1's worked example │
+     │ plus boundary cases:                                                    │
+     │                                                                         │
+     │ ┌────────┬─────────┬──────────┬──────────┬───────────────────────────── │
+     │ ────┐                                                                   │
+     │ │ latest │ current │ declined │ expected │              from            │
+     │    │                                                                    │
+     │ ├────────┼─────────┼──────────┼──────────┼───────────────────────────── │
+     │ ────┤                                                                   │
+     │ │        │         │          │          │ "v5 is published, engagement │
+     │ on │                                                                    │
+     │ │ 5      │ 3       │ null     │ true     │  v3, nothing declined ->     │
+     │    │                                                                    │
+     │ │        │         │          │          │ pending"                     │
+     │    │                                                                    │
+     │ ├────────┼─────────┼──────────┼──────────┼───────────────────────────── │
+     │ ────┤                                                                   │
+     │ │ 5      │ 3       │ 5        │ false    │ "user declines v5; latest is │
+     │ v5 │                                                                    │
+     │ │        │         │          │          │  -> not pending"             │
+     │    │                                                                    │
+     │ ├────────┼─────────┼──────────┼──────────┼───────────────────────────── │
+     │ ────┤                                                                   │
+     │ │ 6      │ 3       │ 5        │ true     │ "v6 is published; v6 is      │
+     │ newer   │                                                               │
+     │ │        │         │          │          │ than both -> pending again"  │
+     │    │                                                                    │
+     │ ├────────┼─────────┼──────────┼──────────┼───────────────────────────── │
+     │ ────┤                                                                   │
+     │ │ 3      │ 3       │ null     │ false    │ current already at latest,   │
+     │    │                                                                    │
+     │ │        │         │          │          │ nothing declined             │
+     │    │                                                                    │
+     │ ├────────┼─────────┼──────────┼──────────┼───────────────────────────── │
+     │ ────┤                                                                   │
+     │ │ 3      │ 3       │ 2        │ false    │ current already at latest,   │
+     │    │                                                                    │
+     │ │        │         │          │          │ stale decline on record      │
+     │    │                                                                    │
+     │ └────────┴─────────┴──────────┴──────────┴───────────────────────────── │
+     │ ────┘                                                                   │
+     │                                                                         │
+     │ coverage-check.ts                                                       │
+     │                                                                         │
+     │ Types and stub matching the updated §4 Evaluation: "The LLM tags each   │
+     │ sentence with the diff entries it describes; plain code checks that     │
+     │ every entry is covered, every tag is real, and every sentence has at    │
+     │ least one tag." Three distinct failure shapes, each reported as its own │
+     │ list rather than collapsed into pass/fail:                              │
+     │                                                                         │
+     │ - omission — a diff entry no sentence covers                            │
+     │ - invention — a tag (an id in some sentence's covers) that matches no   │
+     │   diff entry                                                            │
+     │ - untagged sentence — a sentence whose covers is empty, so it describes │
+     │   nothing in the diff                                                   │
+     │                                                                         │
+     │ export interface DiffEntry {                                            │
+     │   id: string;                                                           │
+     │ }                                                                       │
+     │                                                                         │
+     │ export interface TaggedSentence {                                       │
+     │   text: string;                                                         │
+     │   covers: string[];                                                     │
+     │ }                                                                       │
+     │                                                                         │
+     │ export interface CoverageCheckInput {                                   │
+     │   diffEntries: DiffEntry[];                                             │
+     │   sentences: TaggedSentence[];                                          │
+     │ }                                                                       │
+     │                                                                         │
+     │ export interface CoverageCheckResult {                                  │
+     │   passed: boolean;                                                      │
+     │   uncoveredEntryIds: string[];                                          │
+     │   invalidTagEntryIds: string[];                                         │
+     │   untaggedSentenceIndexes: number[];                                    │
+     │ }                                                                       │
+     │                                                                         │
+     │ export function checkCoverage(input: CoverageCheckInput):               │
+     │ CoverageCheckResult {                                                   │
+     │   throw new Error("not implemented");                                   │
+     │ }                                                                       │
+     │                                                                         │
+     │ Test table (coverage-check.test.ts), cases drawn from §4's              │
+     │ invention/omission/untagged framing:                                    │
+     │                                                                         │
+     │ diffEntries: [a, b]                                                     │
+     │ sentences (text: covers): S1:[a], S2:[b]                                │
+     │ expected passed: true                                                   │
+     │ uncoveredEntryIds: []                                                   │
+     │ invalidTagEntryIds: []                                                  │
+     │ untaggedSentenceIndexes: []                                             │
+     │ from: full coverage, no stray tags, every sentence tagged               │
+     │ ────────────────────────────────────────                                │
+     │ diffEntries: [a, b]                                                     │
+     │ sentences (text: covers): S1:[a]                                        │
+     │ expected passed: false                                                  │
+     │ uncoveredEntryIds: [b]                                                  │
+     │ invalidTagEntryIds: []                                                  │
+     │ untaggedSentenceIndexes: []                                             │
+     │ from: omission: b never mentioned                                       │
+     │ ────────────────────────────────────────                                │
+     │ diffEntries: [a]                                                        │
+     │ sentences (text: covers): S1:[a], S2:[z]                                │
+     │ expected passed: false                                                  │
+     │ uncoveredEntryIds: []                                                   │
+     │ invalidTagEntryIds: [z]                                                 │
+     │ untaggedSentenceIndexes: []                                             │
+     │ from: invention: tag z matches no entry                                 │
+     │ ────────────────────────────────────────                                │
+     │ diffEntries: [a, b]                                                     │
+     │ sentences (text: covers): S1:[a], S2:[z]                                │
+     │ expected passed: false                                                  │
+     │ uncoveredEntryIds: [b]                                                  │
+     │ invalidTagEntryIds: [z]                                                 │
+     │ untaggedSentenceIndexes: []                                             │
+     │ from: omission and invention together                                   │
+     │ ────────────────────────────────────────                                │
+     │ diffEntries: []                                                         │
+     │ sentences (text: covers): (none)                                        │
+     │ expected passed: true                                                   │
+     │ uncoveredEntryIds: []                                                   │
+     │ invalidTagEntryIds: []                                                  │
+     │ untaggedSentenceIndexes: []                                             │
+     │ from: empty diff, nothing to cover                                      │
+     │ ────────────────────────────────────────                                │
+     │ diffEntries: [a]                                                        │
+     │ sentences (text: covers): S1:[a], S2:[a]                                │
+     │ expected passed: true                                                   │
+     │ uncoveredEntryIds: []                                                   │
+     │ invalidTagEntryIds: []                                                  │
+     │ untaggedSentenceIndexes: []                                             │
+     │ from: duplicate tags on same entry still fully covers it                │
+     │ ────────────────────────────────────────                                │
+     │ diffEntries: [a]                                                        │
+     │ sentences (text: covers): S1:[a], S2:[]                                 │
+     │ expected passed: false                                                  │
+     │ uncoveredEntryIds: []                                                   │
+     │ invalidTagEntryIds: []                                                  │
+     │ untaggedSentenceIndexes: [1]                                            │
+     │ from: untagged sentence: empty covers fails even though a is covered    │
+     │ elsewhere                                                               │
+     │ ────────────────────────────────────────                                │
+     │ diffEntries: [a]                                                        │
+     │ sentences (text: covers): S1:[a], S2:[z, z]                             │
+     │ expected passed: false                                                  │
+     │ uncoveredEntryIds: []                                                   │
+     │ invalidTagEntryIds: [z]                                                 │
+     │ untaggedSentenceIndexes: []                                             │
+     │ from: same unknown id tagged twice is reported once, not twice          │
+     │                                                                         │
+     │ Files to add                                                            │
+     │                                                                         │
+     │ - docs/plans/01-scaffold-domain-module.md (this plan, saved first)      │
+     │ - package.json                                                          │
+     │ - tsconfig.json                                                         │
+     │ - src/domain/pending-rule.ts                                            │
+     │ - src/domain/pending-rule.test.ts                                       │
+     │ - src/domain/coverage-check.ts                                          │
+     │ - src/domain/coverage-check.test.ts                                     │
+     │                                                                         │
+     │ Verification                                                            │
+     │                                                                         │
+     │ - npm install to pull typescript + vitest.                              │
+     │ - npm run typecheck — should pass (stubs type-check even though they    │
+     │   throw at runtime).                                                    │
+     │ - npm test — tests will fail at runtime (stubs throw not implemented),  │
+     │   which is expected until the user fills in the logic. Confirms the     │
+     │   test files load, the table cases are wired to the real function       │
+     │   signatures, and Vitest is configured correctly.                       │
+     ╰─────────────────────────────────────────────────────────────────────────╯
+
+✻ Cooked for 43s · done 1:11 PM
+
+❯ Also, add a .gitignore with node_modules and dist.                            
+
+⏺ Updated plan
+  ⎿  /plan to preview
+
+⏺ User approved Claude's plan
+  ⎿  Plan saved to: ~/.claude/plans/read-design-md-scaffold-a-snug-wind.md · 
+     /plan to edit
+     Scaffold the domain module
+
+     Context
+
+     DESIGN.md describes a backend service with two pure, I/O-free functions
+     that are meant to live in one shared domain module: the pending rule (§1
+     "Pending Updates", §3.1) and the summary coverage check (§4 "Evaluation",
+     §3.1/§3.3). The repo currently contains only DESIGN.md — no code, no
+     tooling. This task scaffolds a minimal TypeScript + Vitest project with
+     typed stubs for both functions and table-driven test files seeded with
+     cases drawn straight from the design doc. The user will implement the
+     function bodies; this step only sets up structure, types, and test tables.
+
+     §4 was just updated: the coverage check now also requires every sentence to
+     have at least one tag, not just that every diff entry is covered and every
+     tag is real. The plan below reflects that.
+
+     Execution order
+
+     1. Write this plan to docs/plans/01-scaffold-domain-module.md first.
+     2. Then create the rest of the files below.
+
+     Approach
+
+     Project setup
+
+     - package.json — type: module, devDependencies typescript and vitest,
+       scripts:
+       - test: vitest run
+       - test:watch: vitest
+       - typecheck: tsc --noEmit
+     - tsconfig.json — strict mode on, target: ES2022, module/moduleResolution: 
+       NodeNext, rootDir: src, outDir: dist, strict: true, skipLibCheck: true,
+       esModuleInterop: true.
+     - No framework, no vitest.config.ts — Vitest runs .test.ts files out of the
+       box, matching the design's "no framework" philosophy (§1, "Where It
+       Runs").
+
+     Domain module layout
+
+     src/domain/
+       pending-rule.ts
+       pending-rule.test.ts
+       coverage-check.ts
+       coverage-check.test.ts
+
+     pending-rule.ts
+
+     Types and stub matching §1 "Pending Updates": "An engagement has a pending 
+     update when the latest published version is newer than both its current 
+     version and its declined version."
+
+     export interface PendingRuleInput {
+       latestVersion: number;
+       currentVersion: number;
+       declinedVersion: number | null;
+     }
+
+     export function isPending(input: PendingRuleInput): boolean {
+       throw new Error("not implemented");
+     }
+
+     Test table (pending-rule.test.ts), cases drawn from §1's worked example
+     plus boundary cases:
+
+     ┌────────┬─────────┬──────────┬──────────┬─────────────────────────────────
+     ┐
+     │ latest │ current │ declined │ expected │              from
+     │
+     ├────────┼─────────┼──────────┼──────────┼─────────────────────────────────
+     ┤
+     │        │         │          │          │ "v5 is published, engagement on
+     │
+     │ 5      │ 3       │ null     │ true     │  v3, nothing declined ->
+     │
+     │        │         │          │          │ pending"
+     │
+     ├────────┼─────────┼──────────┼──────────┼─────────────────────────────────
+     ┤
+     │ 5      │ 3       │ 5        │ false    │ "user declines v5; latest is v5
+     │
+     │        │         │          │          │  -> not pending"
+     │
+     ├────────┼─────────┼──────────┼──────────┼─────────────────────────────────
+     ┤
+     │ 6      │ 3       │ 5        │ true     │ "v6 is published; v6 is newer
+     │
+     │        │         │          │          │ than both -> pending again"
+     │
+     ├────────┼─────────┼──────────┼──────────┼─────────────────────────────────
+     ┤
+     │ 3      │ 3       │ null     │ false    │ current already at latest,
+     │
+     │        │         │          │          │ nothing declined
+     │
+     ├────────┼─────────┼──────────┼──────────┼─────────────────────────────────
+     ┤
+     │ 3      │ 3       │ 2        │ false    │ current already at latest,
+     │
+     │        │         │          │          │ stale decline on record
+     │
+     └────────┴─────────┴──────────┴──────────┴─────────────────────────────────
+     ┘
+
+     coverage-check.ts
+
+     Types and stub matching the updated §4 Evaluation: "The LLM tags each 
+     sentence with the diff entries it describes; plain code checks that every 
+     entry is covered, every tag is real, and every sentence has at least one 
+     tag." Three distinct failure shapes, each reported as its own list rather
+     than collapsed into pass/fail:
+
+     - omission — a diff entry no sentence covers
+     - invention — a tag (an id in some sentence's covers) that matches no diff
+       entry
+     - untagged sentence — a sentence whose covers is empty, so it describes
+       nothing in the diff
+
+     export interface DiffEntry {
+       id: string;
+     }
+
+     export interface TaggedSentence {
+       text: string;
+       covers: string[];
+     }
+
+     export interface CoverageCheckInput {
+       diffEntries: DiffEntry[];
+       sentences: TaggedSentence[];
+     }
+
+     export interface CoverageCheckResult {
+       passed: boolean;
+       uncoveredEntryIds: string[];
+       invalidTagEntryIds: string[];
+       untaggedSentenceIndexes: number[];
+     }
+
+     export function checkCoverage(input: CoverageCheckInput):
+     CoverageCheckResult {
+       throw new Error("not implemented");
+     }
+
+     Test table (coverage-check.test.ts), cases drawn from §4's
+     invention/omission/untagged framing:
+
+     diffEntries: [a, b]
+     sentences (text: covers): S1:[a], S2:[b]
+     expected passed: true
+     uncoveredEntryIds: []
+     invalidTagEntryIds: []
+     untaggedSentenceIndexes: []
+     from: full coverage, no stray tags, every sentence tagged
+     ────────────────────────────────────────
+     diffEntries: [a, b]
+     sentences (text: covers): S1:[a]
+     expected passed: false
+     uncoveredEntryIds: [b]
+     invalidTagEntryIds: []
+     untaggedSentenceIndexes: []
+     from: omission: b never mentioned
+     ────────────────────────────────────────
+     diffEntries: [a]
+     sentences (text: covers): S1:[a], S2:[z]
+     expected passed: false
+     uncoveredEntryIds: []
+     invalidTagEntryIds: [z]
+     untaggedSentenceIndexes: []
+     from: invention: tag z matches no entry
+     ────────────────────────────────────────
+     diffEntries: [a, b]
+     sentences (text: covers): S1:[a], S2:[z]
+     expected passed: false
+     uncoveredEntryIds: [b]
+     invalidTagEntryIds: [z]
+     untaggedSentenceIndexes: []
+     from: omission and invention together
+     ────────────────────────────────────────
+     diffEntries: []
+     sentences (text: covers): (none)
+     expected passed: true
+     uncoveredEntryIds: []
+     invalidTagEntryIds: []
+     untaggedSentenceIndexes: []
+     from: empty diff, nothing to cover
+     ────────────────────────────────────────
+     diffEntries: [a]
+     sentences (text: covers): S1:[a], S2:[a]
+     expected passed: true
+     uncoveredEntryIds: []
+     invalidTagEntryIds: []
+     untaggedSentenceIndexes: []
+     from: duplicate tags on same entry still fully covers it
+     ────────────────────────────────────────
+     diffEntries: [a]
+     sentences (text: covers): S1:[a], S2:[]
+     expected passed: false
+     uncoveredEntryIds: []
+     invalidTagEntryIds: []
+     untaggedSentenceIndexes: [1]
+     from: untagged sentence: empty covers fails even though a is covered
+     elsewhere
+     ────────────────────────────────────────
+     diffEntries: [a]
+     sentences (text: covers): S1:[a], S2:[z, z]
+     expected passed: false
+     uncoveredEntryIds: []
+     invalidTagEntryIds: [z]
+     untaggedSentenceIndexes: []
+     from: same unknown id tagged twice is reported once, not twice
+
+     Files to add
+
+     - docs/plans/01-scaffold-domain-module.md (this plan, saved first)
+     - package.json
+     - tsconfig.json
+     - .gitignore (node_modules, dist)
+     - src/domain/pending-rule.ts
+     - src/domain/pending-rule.test.ts
+     - src/domain/coverage-check.ts
+     - src/domain/coverage-check.test.ts
+
+     Verification
+
+     - npm install to pull typescript + vitest.
+     - npm run typecheck — should pass (stubs type-check even though they throw
+       at runtime).
+     - npm test — tests will fail at runtime (stubs throw not implemented),
+       which is expected until the user fills in the logic. Confirms the test
+       files load, the table cases are wired to the real function signatures,
+       and Vitest is configured correctly.
+
+  Read 1 file, ran 1 shell command (ctrl+o to expand)
+
+⏺ Saving the plan to the project first, as step 1 requires.
+
+⏺ Write(docs/plans/01-scaffold-domain-module.md)
+  ⎿  Wrote 123 lines to docs/plans/01-scaffold-domain-module.md
+      1 # Scaffold the domain module
+      3 ## Context
+      4 
+        unctions that are meant to live in one shared domain module: **th
+        overage check** (§4 "Evaluation", §3.1/§3.3). The repo currently 
+        contains only `DESIGN.md` — no code, no tooling. This task scaffo
+        th functions and table-driven test files seeded with cases drawn 
+        straight from the design doc. The user will implement the functio
+        s.
+      7 §4 was just updated: the coverage check now also requires e
+     … +157 lines (ctrl+o to expand)
+
+⏺ Now creating the rest of the scaffold.
+
+⏺ Write(package.json)
+  ⎿  Wrote 15 lines to package.json
+       1 {
+       2   "name": "template-update-tracker",
+       3   "version": "0.1.0",
+       4   "private": true,
+       5   "type": "module",
+       6   "scripts": {
+       7     "test": "vitest run",
+       8     "test:watch": "vitest",
+       9     "typecheck": "tsc --noEmit"
+      10   },
+     … +5 lines (ctrl+o to expand)
+
+⏺ Write(tsconfig.json)
+  ⎿  Wrote 15 lines to tsconfig.json
+       1 {
+       2   "compilerOptions": {
+       3     "target": "ES2022",
+       4     "lib": ["ES2022"],
+       5     "module": "NodeNext",
+       6     "moduleResolution": "NodeNext",
+       7     "rootDir": "src",
+       8     "outDir": "dist",
+       9     "strict": true,
+      10     "esModuleInterop": true,
+     … +5 lines (ctrl+o to expand)
+
+⏺ Write(.gitignore)
+  ⎿  Wrote 2 lines to .gitignore
+      1 node_modules
+      2 dist
+
+⏺ Write(src/domain/pending-rule.ts)
+  ⎿  Wrote 9 lines to src/domain/pending-rule.ts
+      1 export interface PendingRuleInput {
+      2   latestVersion: number;
+      3   currentVersion: number;
+      4   declinedVersion: number | null;
+      5 }
+      6 
+      7 export function isPending(input: PendingRuleInput): boolean {
+      8   throw new Error("not implemented");
+      9 }
+⏺ Write(src/domain/pending-rule.test.ts)
+  ⎿  Wrote 41 lines to src/domain/pending-rule.test.ts
+       1 import { describe, expect, it } from "vitest";
+       2 import { isPending, type PendingRuleInput } from "./pending-rule
+         .js";
+       3 
+       4 // Cases drawn from DESIGN.md §1 "Pending Updates".
+       6   name: string;
+       7   input: PendingRuleInput;
+       8   expected: boolean;
+       9 }> = [
+      10   {
+     … +38 lines (ctrl+o to expand)
+
+⏺ Write(src/domain/coverage-check.ts)
+  ⎿  Wrote 24 lines to src/domain/coverage-check.ts
+       1 export interface DiffEntry {
+       2   id: string;
+       3 }
+       4 
+       5 export interface TaggedSentence {
+       6   text: string;
+       7   covers: string[];
+       8 }
+       9 
+      10 export interface CoverageCheckInput {
+     … +15 lines (ctrl+o to expand)
+
+⏺ Write(src/domain/coverage-check.test.ts)
+  ⎿  Wrote 141 lines to src/domain/coverage-check.test.ts
+       1 import { describe, expect, it } from "vitest";
+       2 import {
+       3   checkCoverage,
+       5   type CoverageCheckResult,
+       6 } from "./coverage-check.js";
+       7 
+       8 // Cases drawn from DESIGN.md §4 Evaluation: a summary can fail 
+       9 // (an entry no sentence covers), invention (a tag matching no e
+         ntry), or now
+      10 // an untagged sentence (a sentence covering no entry).
+     … +135 lines (ctrl+o to expand)
+
+⏺ Now let's verify typecheck works (install deps first).
+
+  Ran 3 shell commands (ctrl+o to expand)
+
+⏺ I'll bump vitest to the latest major to clear the audit vulnerabilities rather
+  than pin to an older line.
+
+⏺ Update(package.json)
+  ⎿  Added 1 line, removed 1 line
+      10    },
+      11    "devDependencies": {
+      12      "typescript": "^5.6.0",
+      13 -    "vitest": "^2.1.0"                                         
+      13 +    "vitest": "^5.0.3"                                         
+      14    }
+      15  }
+
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ Clean audit now. Running typecheck and tests to confirm the scaffold is wired
+  correctly.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ Typecheck passes clean. Now running the test suite — expecting runtime
+  failures since the stubs throw not implemented, which confirms wiring is
+  correct.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ All 13 test cases (5 + 8) fail exactly as expected — not implemented,
+  confirming the test tables are correctly wired to the stub signatures.
+  Typecheck is clean.
+
+  Scaffold complete:
+  - docs/plans/01-scaffold-domain-module.md — saved plan
+  - package.json, tsconfig.json, .gitignore
+  - src/domain/pending-rule.ts / .test.ts — stub + 5 table cases
+  - src/domain/coverage-check.ts / .test.ts — stub + 8 table cases (omission,
+    invention, and the new untagged-sentence case, plus duplicate-tag dedup)
+
+  Ready for you to implement isPending and checkCoverage.
+
+✻ Baked for 1m 48s · done 1:17 PM

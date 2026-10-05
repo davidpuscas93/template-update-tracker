@@ -103,7 +103,7 @@ Most bugs in such a system live where the pieces meet: event handlers, the DB, t
 
 A summary can fail by **invention** (describing a change that isn't in the diff) or **omission** (leaving one out). Omission is worse for an auditor: nothing on the UI hints at a change they never saw. Unlike most LLM tasks, this one has ground truth, the diff itself, so evaluation has three layers:
 
-- **Automated check, on every summary**. The LLM tags each sentence with the diff entries it describes; plain code, not another LLM, checks that every entry is covered and every tag is real. On failure it retries once, then falls back to a mechanical list rendered from the diff: less readable, never wrong. This proves every change is mentioned, not that each is described correctly; the next two layers cover that.
+- **Automated check, on every summary**. The LLM tags each sentence with the diff entries it describes; plain code, not another LLM, checks that every entry is covered, every tag is real, and every sentence has at least one tag. On failure it retries once, then falls back to a mechanical list rendered from the diff: less readable, never wrong. This proves every change is mentioned, not that each is described correctly; the next two layers cover that.
 - **Content team review**. The team that published the change reviews its summaries afterwards and can reject one (recorded in its `status`), which falls back to the mechanical list. With about one publish a week per template, this is realistic.
 - **User feedback**. A "this summary is wrong" action on the UI, tracked per `model_id`, so a model change that makes summaries worse shows up quickly.
 
